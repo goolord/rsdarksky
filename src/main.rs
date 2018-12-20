@@ -36,17 +36,17 @@ fn main() {
 
 fn enc_icon(plain: &str) -> &str {
     match plain {
-	"clear-day"           => "",
-	"clear-night"         => "",
-	"rain"                => "",
-	"snow"                => "流",
-	"sleet"               => "",
-	"wind"                => "",
-	"fog"                 => "敖",
-	"cloudy"              => "",
-	"partly-cloudy-day"   => "杖",
-	"partly-cloudy-night" => "",
+    "clear-day"           => "",
+    "clear-night"         => "",
+    "rain"                => "",
+    "snow"                => "流",
+    "sleet"               => "",
+    "wind"                => "",
+    "fog"                 => "敖",
+    "cloudy"              => "",
+    "partly-cloudy-day"   => "杖",
+    "partly-cloudy-night" => "",
     _                     => ""
-	}
+    }
 }
 
