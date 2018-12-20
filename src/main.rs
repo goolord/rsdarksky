@@ -29,9 +29,9 @@ fn main() {
     let icon = enc_icon(Value::as_str(Map::get(Value::as_object(&currently).unwrap(), "icon").expect("key \"icon\" does not exist")).unwrap());
     let deg = Value::as_f64(
                 Map::get(Value::as_object(&currently).unwrap(), "temperature").expect("key \"temperature\" does not exist")
-            ).unwrap().round() as i64;
+            ).unwrap();
 
-    println!("{} {}°",icon,deg)
+    println!("{} {:.0}°",icon,deg)
 }
 
 fn enc_icon(plain: &str) -> &str {
@@ -46,7 +46,7 @@ fn enc_icon(plain: &str) -> &str {
 	"cloudy"              => "",
 	"partly-cloudy-day"   => "杖",
 	"partly-cloudy-night" => "",
-	_ 					  => ""
+    _                     => ""
 	}
 }
 
