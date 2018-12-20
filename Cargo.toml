@@ -1,0 +1,17 @@
+[package]
+name = "rsdarksky"
+version = "0.1.0"
+authors = ["goolord <zacharyachurchill@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+clap = "2.32.0"
+serde = "1.0.82"
+serde_json = "1.0.33"
+reqwest = "0.9.5"
+
+[profile.dev]
+opt-level = 0
+
+[profile.release]
+opt-level = 3
