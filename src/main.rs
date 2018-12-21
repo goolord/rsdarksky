@@ -18,6 +18,7 @@ fn main() {
         (@arg LONGITUDE: -o --longitude +required +takes_value +allow_hyphen_values "current longitude")
     ).get_matches();
 
+    // missing required arguments probably get caught by clap
     let api  = matches.value_of("API").unwrap();
     let lat  = matches.value_of("LATITUDE").unwrap();
     let long = matches.value_of("LONGITUDE").unwrap();
@@ -34,19 +35,19 @@ fn main() {
     println!("{} {:.0}°",icon,deg)
 }
 
-fn enc_icon(plain: &str) -> &str {
+fn enc_icon(plain: &str) -> char {
     match plain {
-    "clear-day"           => "",
-    "clear-night"         => "",
-    "rain"                => "",
-    "snow"                => "流",
-    "sleet"               => "",
-    "wind"                => "",
-    "fog"                 => "敖",
-    "cloudy"              => "",
-    "partly-cloudy-day"   => "杖",
-    "partly-cloudy-night" => "",
-    _                     => ""
+    "clear-day"           => '',
+    "clear-night"         => '',
+    "rain"                => '',
+    "snow"                => '流',
+    "sleet"               => '',
+    "wind"                => '',
+    "fog"                 => '敖',
+    "cloudy"              => '',
+    "partly-cloudy-day"   => '杖',
+    "partly-cloudy-night" => '',
+    _                     => ''
     }
 }
 

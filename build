@@ -1,0 +1,4 @@
+#! /bin/sh
+cargo build --release
+strip ./target/release/rsdarksky
+upx ./target/release/rsdarksky
