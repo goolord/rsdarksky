@@ -3,10 +3,7 @@ extern crate clap;
 extern crate reqwest;
 extern crate serde;
 extern crate serde_json;
-use clap::{Arg, App, SubCommand};
-use serde_json::{Value, Error, Map};
-use std::env;
-use std::io::{self, Read, Write};
+use serde_json::{Map, Value};
 
 fn main() {
     let matches = clap_app!(rsdarksky =>
@@ -19,35 +16,49 @@ fn main() {
     ).get_matches();
 
     // missing required arguments probably get caught by clap
-    let api  = matches.value_of("API").unwrap();
-    let lat  = matches.value_of("LATITUDE").unwrap();
+    let api = matches.value_of("API").unwrap();
+    let lat = matches.value_of("LATITUDE").unwrap();
     let long = matches.value_of("LONGITUDE").unwrap();
 
-    let uri: std::string::String = format!("https://api.darksky.net/forecast/{}/{},{}?units=auto", api, lat, long);
+    let uri: std::string::String = format!(
+        "https://api.darksky.net/forecast/{}/{},{}?units=auto",
+        api, lat, long
+    );
 
-    let resp: Map<String, Value> = reqwest::get(&uri).expect("Failed to send request").json().expect("Failed to deserialize json");
-    let currently = Map::get(&resp,"currently").expect("key \"currently\" does not exist");
-    let icon = enc_icon(Value::as_str(Map::get(Value::as_object(&currently).unwrap(), "icon").expect("key \"icon\" does not exist")).unwrap());
+    // erros in unwrap here will mean an api change
+    let resp: Map<String, Value> = reqwest::get(&uri)
+        .expect("Failed to send request")
+        .json()
+        .expect("Failed to deserialize json");
+    let currently = Map::get(&resp, "currently").expect("key \"currently\" does not exist");
+    let icon = enc_icon(
+        Value::as_str(
+            Map::get(Value::as_object(&currently).unwrap(), "icon")
+                .expect("key \"icon\" does not exist"),
+        )
+        .unwrap(),
+    );
     let deg = Value::as_f64(
-                Map::get(Value::as_object(&currently).unwrap(), "temperature").expect("key \"temperature\" does not exist")
-            ).unwrap();
+        Map::get(Value::as_object(&currently).unwrap(), "temperature")
+            .expect("key \"temperature\" does not exist"),
+    )
+    .unwrap();
 
-    println!("{} {:.0}°",icon,deg)
+    println!("{} {:.0}°", icon, deg)
 }
 
 fn enc_icon(plain: &str) -> char {
     match plain {
-    "clear-day"           => '',
-    "clear-night"         => '',
-    "rain"                => '',
-    "snow"                => '流',
-    "sleet"               => '',
-    "wind"                => '',
-    "fog"                 => '敖',
-    "cloudy"              => '',
-    "partly-cloudy-day"   => '杖',
-    "partly-cloudy-night" => '',
-    _                     => ''
+        "clear-day" => '',
+        "clear-night" => '',
+        "rain" => '',
+        "snow" => '流',
+        "sleet" => '',
+        "wind" => '',
+        "fog" => '敖',
+        "cloudy" => '',
+        "partly-cloudy-day" => '杖',
+        "partly-cloudy-night" => '',
+        _ => '', // missing
     }
 }
-
