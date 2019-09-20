@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 clap = "2.32.0"
 serde = "1.0.82"
-serde_json = "1.0.33"
+serde_json = "1.0.34"
 reqwest = "0.9.5"
 
 [profile.dev]
@@ -15,4 +15,3 @@ opt-level = 0
 
 [profile.release]
 opt-level = 3
-lto = true
