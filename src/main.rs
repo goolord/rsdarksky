@@ -44,7 +44,7 @@ fn main() {
     )
     .unwrap();
 
-    println!("{} {:.0}°", icon, deg)
+    println!("{}  {:.0}°", icon, deg)
 }
 
 fn enc_icon(plain: &str) -> char {
