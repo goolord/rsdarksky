@@ -1,28 +1,31 @@
-#[macro_use]
-extern crate clap;
 extern crate reqwest;
 extern crate serde;
 extern crate serde_json;
 use serde_json::{Map, Value};
+use structopt::StructOpt;
+
+#[derive(Debug, StructOpt)]
+#[structopt(
+    name = "rsdarksky",
+    about = "simple dark sky weather (for use in scripted bars)",
+    version = "1.0",
+    author = "Zachary Churchill <zacharyachurchill@gmail.com>"
+)]
+struct Opt {
+    #[structopt(long, short, help = "dark sky api key")]
+    api: String,
+    #[structopt(long, short, help = "latitudinal posistion of weather")]
+    latitude: String,
+    #[structopt(long, short, help = "longitudinal posistion of weather")]
+    longitude: String,
+}
 
 fn main() {
-    let matches = clap_app!(rsdarksky =>
-        (version: "1.0")
-        (author: "Zachary Churchill <zacharyachurchill@gmail.com>")
-        (about: "simple dark sky weather (for use in scripted bars)")
-        (@arg API: -a --api +required +takes_value "dark sky api key")
-        (@arg LATITUDE: -l --latitude +required +takes_value +allow_hyphen_values "current latitude")
-        (@arg LONGITUDE: -o --longitude +required +takes_value +allow_hyphen_values "current longitude")
-    ).get_matches();
-
-    // missing required arguments probably get caught by clap
-    let api = matches.value_of("API").unwrap();
-    let lat = matches.value_of("LATITUDE").unwrap();
-    let long = matches.value_of("LONGITUDE").unwrap();
+    let opt = Opt::from_args();
 
     let uri: std::string::String = format!(
         "https://api.darksky.net/forecast/{}/{},{}?units=auto",
-        api, lat, long
+        opt.api, opt.latitude, opt.longitude
     );
 
     // erros in unwrap here will mean an api change
