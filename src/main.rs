@@ -12,11 +12,11 @@ use structopt::StructOpt;
     author = "Zachary Churchill <zacharyachurchill@gmail.com>"
 )]
 struct Opt {
-    #[structopt(long, short, help = "dark sky api key")]
+    #[structopt(long, help = "dark sky api key")]
     api: String,
-    #[structopt(long, short, help = "latitudinal posistion of weather")]
+    #[structopt(long, help = "latitudinal posistion of weather")]
     latitude: String,
-    #[structopt(long, short, help = "longitudinal posistion of weather")]
+    #[structopt(long, help = "longitudinal posistion of weather")]
     longitude: String,
 }
 
@@ -50,18 +50,19 @@ fn main() {
     println!("{}  {:.0}°", icon, deg)
 }
 
-fn enc_icon(plain: &str) -> char {
-    match plain {
-        "clear-day" => '',
-        "clear-night" => '',
-        "rain" => '',
-        "snow" => '流',
-        "sleet" => '',
-        "wind" => '',
-        "fog" => '敖',
-        "cloudy" => '',
-        "partly-cloudy-day" => '杖',
-        "partly-cloudy-night" => '',
-        _ => '', // missing
-    }
+fn enc_icon(plain: &str) -> String {
+    let (ico, color) = match plain {
+        "clear-day"           => ('' , "#fabd2f"),
+        "clear-night"         => ('' , "#d5c4a1"),
+        "rain"                => ('' , "#83a598"),
+        "snow"                => ('流', "#fbf1c7"),
+        "sleet"               => ('' , "#d3869b"),
+        "wind"                => ('' , "#ebdbb2"),
+        "fog"                 => ('敖', "#928374"),
+        "cloudy"              => ('' , "#d5c4a1"),
+        "partly-cloudy-day"   => ('杖', "#d79921"),
+        "partly-cloudy-night" => ('' , "#bdae93"),
+        _                     => ('' , "#fb4934"), // missing
+    };
+    format!("<span color =\"{}\">{}</span>", color, ico)
 }
