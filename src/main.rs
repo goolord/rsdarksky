@@ -7,12 +7,12 @@ use structopt::StructOpt;
 #[derive(Debug, StructOpt)]
 #[structopt(
     name = "rsdarksky",
-    about = "simple dark sky weather (for use in scripted bars)",
+    about = "simple pirate weather weather (for use in scripted bars)",
     version = "1.0",
     author = "Zachary Churchill <zacharyachurchill@gmail.com>"
 )]
 struct Opt {
-    #[structopt(long, help = "dark sky api key")]
+    #[structopt(long, help = "pirate weather api key")]
     api: String,
     #[structopt(long, help = "latitudinal posistion of weather")]
     latitude: String,
@@ -24,7 +24,7 @@ fn main() {
     let opt = Opt::from_args();
 
     let uri: std::string::String = format!(
-        "https://api.darksky.net/forecast/{}/{},{}?units=auto",
+        "https://api.pirateweather.net/forecast/{}/{},{}?units=auto",
         opt.api, opt.latitude, opt.longitude
     );
 
