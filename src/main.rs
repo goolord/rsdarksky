@@ -1,68 +1,137 @@
-extern crate reqwest;
-extern crate serde;
-extern crate serde_json;
-use serde_json::{Map, Value};
-use structopt::StructOpt;
+use anyhow::{Context, Result};
+use clap::Parser;
+use reqwest::Url;
+use serde::Deserialize;
+use std::time::Duration;
 
-#[derive(Debug, StructOpt)]
-#[structopt(
+const REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
+
+#[derive(Debug, Parser)]
+#[command(
     name = "rsdarksky",
-    about = "simple pirate weather weather (for use in scripted bars)",
-    version = "1.0",
+    about = "Simple Pirate Weather client for scripted status bars",
+    version,
     author = "Zachary Churchill <zacharyachurchill@gmail.com>"
 )]
 struct Opt {
-    #[structopt(long, help = "pirate weather api key")]
+    /// Pirate Weather API key (or set `PIRATE_WEATHER_API_KEY`)
+    #[arg(long, env = "PIRATE_WEATHER_API_KEY")]
     api: String,
-    #[structopt(long, help = "latitudinal posistion of weather")]
-    latitude: String,
-    #[structopt(long, help = "longitudinal posistion of weather")]
-    longitude: String,
+
+    /// Latitude of the location
+    #[arg(long, value_parser = clap::value_parser!(f64))]
+    latitude: f64,
+
+    /// Longitude of the location
+    #[arg(long, value_parser = clap::value_parser!(f64))]
+    longitude: f64,
 }
 
-fn main() {
-    let opt = Opt::from_args();
+#[derive(Deserialize)]
+struct Forecast {
+    currently: Currently,
+}
 
-    let uri: std::string::String = format!(
-        "https://api.pirateweather.net/forecast/{}/{},{}?units=auto",
-        opt.api, opt.latitude, opt.longitude
-    );
+#[derive(Deserialize)]
+struct Currently {
+    icon: String,
+    temperature: f64,
+}
 
-    // erros in unwrap here will mean an api change
-    let resp: Map<String, Value> = reqwest::get(&uri)
-        .expect("Failed to send request")
+fn build_forecast_url(api: &str, latitude: f64, longitude: f64) -> Result<Url> {
+    let mut url =
+        Url::parse("https://api.pirateweather.net/forecast").context("invalid base URL")?;
+    {
+        let mut segments = url
+            .path_segments_mut()
+            .map_err(|_| anyhow::anyhow!("base URL cannot be a base"))?;
+        segments.push(api);
+        segments.push(&format!("{latitude},{longitude}"));
+    }
+    url.query_pairs_mut().append_pair("units", "auto");
+    Ok(url)
+}
+
+fn http_client() -> Result<reqwest::blocking::Client> {
+    reqwest::blocking::Client::builder()
+        .timeout(REQUEST_TIMEOUT)
+        .build()
+        .context("failed to build HTTP client")
+}
+
+fn main() -> Result<()> {
+    let opt = Opt::parse();
+    let uri = build_forecast_url(&opt.api, opt.latitude, opt.longitude)?;
+
+    let forecast: Forecast = http_client()?
+        .get(uri)
+        .send()
+        .context("failed to send request")?
+        .error_for_status()
+        .context("request returned an error status")?
         .json()
-        .expect("Failed to deserialize json");
-    let currently = Map::get(&resp, "currently").expect("key \"currently\" does not exist");
-    let icon = enc_icon(
-        Value::as_str(
-            Map::get(Value::as_object(&currently).unwrap(), "icon")
-                .expect("key \"icon\" does not exist"),
-        )
-        .unwrap(),
-    );
-    let deg = Value::as_f64(
-        Map::get(Value::as_object(&currently).unwrap(), "temperature")
-            .expect("key \"temperature\" does not exist"),
-    )
-    .unwrap();
+        .context("failed to deserialize response")?;
 
-    println!("{}  {:.0}°", icon, deg)
+    let icon = encode_icon(&forecast.currently.icon);
+    println!("{}\u{2005} {:.0}°", icon, forecast.currently.temperature);
+
+    Ok(())
 }
 
-fn enc_icon(plain: &str) -> String {
+fn encode_icon(plain: &str) -> String {
     let (ico, color) = match plain {
-        "clear-day"           => ('' , "#fabd2f"),
-        "clear-night"         => ('' , "#d5c4a1"),
-        "rain"                => ('' , "#83a598"),
-        "snow"                => ('流', "#fbf1c7"),
-        "sleet"               => ('' , "#d3869b"),
-        "wind"                => ('' , "#ebdbb2"),
-        "fog"                 => ('敖', "#928374"),
-        "cloudy"              => ('' , "#d5c4a1"),
-        "partly-cloudy-day"   => ('杖', "#d79921"),
-        "partly-cloudy-night" => ('' , "#bdae93"),
-        _                     => ('' , "#fb4934"), // missing
+        "clear-day" => ('\u{f185}', "#fabd2f"),
+        "clear-night" => ('\u{f186}', "#d5c4a1"),
+        "rain" => ('\u{f0e9}', "#83a598"),
+        "snow" => ('\u{faa7}', "#fbf1c7"),
+        "sleet" => ('\u{e3ad}', "#d3869b"),
+        "wind" => ('\u{f1d8}', "#ebdbb2"),
+        "fog" => ('\u{fa90}', "#928374"),
+        "cloudy" => ('\u{e312}', "#d5c4a1"),
+        "partly-cloudy-day" => ('\u{fa94}', "#d79921"),
+        "partly-cloudy-night" => ('\u{e379}', "#bdae93"),
+        _ => ('\u{f00d}', "#fb4934"), // unknown icon — show red X in status bar
     };
-    format!("<span color =\"{}\">{}</span>", color, ico)
+    format!("<span color =\"{color}\">{ico}</span>")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn build_forecast_url_encodes_path_segments() {
+        let url = build_forecast_url("key/with/slash", 37.77, -122.42).unwrap();
+        assert_eq!(
+            url.as_str(),
+            "https://api.pirateweather.net/forecast/key%2Fwith%2Fslash/37.77,-122.42?units=auto"
+        );
+    }
+
+    #[test]
+    fn encode_icon_known_weather_types() {
+        let cases = [
+            ("clear-day", '\u{f185}', "#fabd2f"),
+            ("clear-night", '\u{f186}', "#d5c4a1"),
+            ("rain", '\u{f0e9}', "#83a598"),
+            ("snow", '\u{faa7}', "#fbf1c7"),
+            ("sleet", '\u{e3ad}', "#d3869b"),
+            ("wind", '\u{f1d8}', "#ebdbb2"),
+            ("fog", '\u{fa90}', "#928374"),
+            ("cloudy", '\u{e312}', "#d5c4a1"),
+            ("partly-cloudy-day", '\u{fa94}', "#d79921"),
+            ("partly-cloudy-night", '\u{e379}', "#bdae93"),
+        ];
+
+        for (icon, glyph, color) in cases {
+            let got = encode_icon(icon);
+            assert_eq!(got, format!("<span color =\"{color}\">{glyph}</span>"));
+        }
+    }
+
+    #[test]
+    fn encode_icon_unknown_falls_back_to_red_x() {
+        let got = encode_icon("hail");
+        assert_eq!(got, "<span color =\"#fb4934\">\u{f00d}</span>");
+    }
 }
