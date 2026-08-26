@@ -79,18 +79,33 @@ fn main() -> Result<()> {
 }
 
 fn encode_icon(plain: &str) -> String {
+    // Nerd Fonts v3 weather icons (U+E300–E3E3):
+    // https://github.com/ryanoasis/nerd-fonts/wiki/Glyph-Sets-and-Code-Points
+    //
+    // plain                 | glyph
+    // clear-day             | weather-day_sunny              (e30d)
+    // clear-night           | weather-night_clear            (e32b)
+    // rain                  | weather-rain                   (e318)
+    // snow                  | weather-snow                   (e31a)
+    // sleet                 | weather-sleet                  (e3ad)
+    // wind                  | weather-windy                  (e31e)
+    // fog                   | weather-fog                    (e313)
+    // cloudy                | weather-cloudy                 (e312)
+    // partly-cloudy-day     | weather-day_cloudy             (e302)
+    // partly-cloudy-night   | weather-night_alt_partly_cloudy (e379)
+    // (unknown)             | weather-na                     (e374)
     let (ico, color) = match plain {
-        "clear-day" => ('\u{f185}', "#fabd2f"),
-        "clear-night" => ('\u{f186}', "#d5c4a1"),
-        "rain" => ('\u{f0e9}', "#83a598"),
-        "snow" => ('\u{faa7}', "#fbf1c7"),
+        "clear-day" => ('\u{e30d}', "#fabd2f"),
+        "clear-night" => ('\u{e32b}', "#d5c4a1"),
+        "rain" => ('\u{e318}', "#83a598"),
+        "snow" => ('\u{e31a}', "#fbf1c7"),
         "sleet" => ('\u{e3ad}', "#d3869b"),
-        "wind" => ('\u{f1d8}', "#ebdbb2"),
-        "fog" => ('\u{fa90}', "#928374"),
+        "wind" => ('\u{e31e}', "#ebdbb2"),
+        "fog" => ('\u{e313}', "#928374"),
         "cloudy" => ('\u{e312}', "#d5c4a1"),
-        "partly-cloudy-day" => ('\u{fa94}', "#d79921"),
+        "partly-cloudy-day" => ('\u{e302}', "#d79921"),
         "partly-cloudy-night" => ('\u{e379}', "#bdae93"),
-        _ => ('\u{f00d}', "#fb4934"), // unknown icon — show red X in status bar
+        _ => ('\u{e374}', "#fb4934"), // unknown icon — weather-na
     };
     format!("<span color =\"{color}\">{ico}</span>")
 }
@@ -111,15 +126,15 @@ mod tests {
     #[test]
     fn encode_icon_known_weather_types() {
         let cases = [
-            ("clear-day", '\u{f185}', "#fabd2f"),
-            ("clear-night", '\u{f186}', "#d5c4a1"),
-            ("rain", '\u{f0e9}', "#83a598"),
-            ("snow", '\u{faa7}', "#fbf1c7"),
+            ("clear-day", '\u{e30d}', "#fabd2f"),
+            ("clear-night", '\u{e32b}', "#d5c4a1"),
+            ("rain", '\u{e318}', "#83a598"),
+            ("snow", '\u{e31a}', "#fbf1c7"),
             ("sleet", '\u{e3ad}', "#d3869b"),
-            ("wind", '\u{f1d8}', "#ebdbb2"),
-            ("fog", '\u{fa90}', "#928374"),
+            ("wind", '\u{e31e}', "#ebdbb2"),
+            ("fog", '\u{e313}', "#928374"),
             ("cloudy", '\u{e312}', "#d5c4a1"),
-            ("partly-cloudy-day", '\u{fa94}', "#d79921"),
+            ("partly-cloudy-day", '\u{e302}', "#d79921"),
             ("partly-cloudy-night", '\u{e379}', "#bdae93"),
         ];
 
@@ -130,8 +145,8 @@ mod tests {
     }
 
     #[test]
-    fn encode_icon_unknown_falls_back_to_red_x() {
+    fn encode_icon_unknown_falls_back_to_weather_na() {
         let got = encode_icon("hail");
-        assert_eq!(got, "<span color =\"#fb4934\">\u{f00d}</span>");
+        assert_eq!(got, "<span color =\"#fb4934\">\u{e374}</span>");
     }
 }
